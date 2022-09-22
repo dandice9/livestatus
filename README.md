@@ -9,5 +9,6 @@ export NVM_DIR="$([ -z "${XDG_CONFIG_HOME-}" ] && printf %s "${HOME}/.nvm" || pr
 nvm install --lts
 
 npm install
-npm run migrate
 ```
+
+update config/config.js then `npm run migrate`
