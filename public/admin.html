@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Monitor Page</title>
+  </head>
+  <body>
+    <script src="/jquery.js"></script>
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+    var socket = io(), userList = [];
+
+    function setAgentId(id){
+        $('#agentid').val(id)
+
+        const status = userList.find(obj => obj.id === id).status
+
+        if(status === 'online'){
+            $('#online_status').attr('checked', 'checked')
+        }
+        else {
+            $('#offline_status').attr('checked', 'checked')
+        }
+    }
+
+    function createField(data){
+        const field = $(`<div class='user_data' id='${data.id}'>`)
+        const inField1 = $('<span>')
+        const inField2 = $('<span>')
+        const inField3 = $(`<button onclick="setAgentId('${data.id}')">pick</button>`)
+        inField1.text(data.id)
+        inField2.text(`[${data.status}]`)
+        field.append(inField1)
+        field.append(inField2)
+        field.append(inField3)
+        return field
+    }
+
+    function updateAgent(){
+        const id = $('#agentid').val()
+        const status = $("input[name='status']:checked").val();
+
+        if(id){
+            socket.emit('agent update', {
+                id, status
+            })
+        }
+    }
+    
+    socket.on('connect', () => {
+        console.log('connected!')
+
+        socket.emit('admin sub', "ignored")
+    })
+    socket.on('disconnect', () => {
+        console.log('disconnected!')
+        $('#displayBox').html('')
+    })
+    socket.on('admin sub', (data) => {
+        userList = data
+
+        userList.forEach(element => {
+            console.log(element)
+            const uField = createField(element)
+
+            $('#displayBox').append(uField)
+        });
+    })
+    socket.on('agent update', (data) => {
+        let user = userList.find(obj => obj.id === data.id)
+        user.status = data.status
+        const elem = createField(data)
+
+        if($(`#${user.id}`))
+            $(`#${user.id}`).html(elem.html())
+        else
+            $('#displayBox').append(elem)
+    })
+    </script>
+    
+    <div>
+        <input type="text" name="agentid" id="agentid" placeholder="agent id" readonly="true" />
+    </div>
+    <ul style="list-style-type: none;">
+        <li>
+            <label><input id="online_status" class="status_info" type="radio" name="status" value="online" checked="checked" />Online</label>
+        </li>
+        <li>
+            <label><input id="offline_status" class="status_info" type="radio" name="status" value="offline" />Offline</label>
+        </li>
+    </ul>
+
+    <div>
+        <button onclick="updateAgent()" id="connectBtn">Update</button>
+    </div>
+    <hr/>
+    <div id="displayBox"></div>
+  </body>
+</html>

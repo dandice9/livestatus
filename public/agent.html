@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Agent Page</title>
+  </head>
+  <body>
+    <script src="/jquery.js"></script>
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+    var socket = io(), socketConnected = false, status = 'online', username = '';
+
+    socket.on('connect', () => {
+        socketConnected = true
+
+        if(username){
+            connectUser()
+        }
+    })
+
+    socket.on('agent update', data => {
+        if(data.id === username){
+            if(data.status === 'online'){
+                document.getElementById('statusOn').checked = true
+                console.log('online checked')
+            }
+            else{
+                document.getElementById('statusOff').checked = true
+                console.log('offline checked')
+            }
+        }
+    })
+
+    socket.on('disconnect', () => {
+        updateConnectDisplay(false)
+    })
+
+    function updateConnectDisplay(status){
+        if(status){
+            document.getElementById('status_connect').style.display = 'inline-block'
+            document.getElementById('status_disconnect').style.display = 'none'
+        }
+        else {
+            document.getElementById('status_connect').style.display = 'none'
+            document.getElementById('status_disconnect').style.display = 'inline-block'
+        }
+    }
+
+    function connectUser(){
+        username = document.getElementById('username').value
+        
+        if(socketConnected){
+            socket.emit('agent sub', {
+                id: username,
+                status
+            })
+
+            updateConnectDisplay(true)
+            $('#username').attr('readonly', 'true')
+        }
+        else {
+            alert('cannot connect to server')
+        }
+    }
+
+    function updateStatus(elem){
+        let statusValue = elem.value
+        status = statusValue
+
+        socket.emit('agent update', {
+            id: username,
+            status
+        })
+    }
+    
+    </script>
+
+<div>
+    <input type="text" name="username" id="username" /><button onclick="connectUser()" id="connectBtn">Connect</button>
+</div>
+<div>
+    Status: <span id="status_connect" style="color: green;display: none;">connected</span> <span id="status_disconnect" style="color: red">not connected</span>
+</div>
+<div>
+    <ul style="list-style-type: none;">
+        <li>
+            <label><input id="statusOn" type="radio" name="status" value="online" checked="checked" onchange="updateStatus(this)" />Online</label>
+        </li>
+        <li>
+            <label><input id="statusOff" type="radio" name="status" value="offline" onchange="updateStatus(this)" />Offline</label>
+        </li>
+    </ul>
+</div>
+
+  </body>
+</html>
