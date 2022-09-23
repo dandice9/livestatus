@@ -62,23 +62,22 @@ io.on('connection', (socket) => {
             }
         }
 
-        socket.emit('agent update', {
+        const updatedData = {
             id, status: cachedStatus
-        })
+        }
+        io.in('admin room').emit('agent update', updatedData)
 
-        socket.to('admin room').emit('agent update', {
-            id, status: cachedStatus
-        })
+        socket.emit('agent update', updatedData)
 
         if(socketList[socketId])
             socketList[socketId].userId = id
             
         socket.join('agent room')
 
-        updateUser(data)
+        updateUser(updatedData)
     })
 
-    socket.on('admin sub', (data) => {
+    socket.on('admin sub', () => {
         const userList = []
         for(const key in userCache){
             userList.push({
@@ -94,8 +93,8 @@ io.on('connection', (socket) => {
         const uc = userCache[data.id]
         if(uc){
             uc.status = data.status
-            socket.to('admin room').emit('agent update', data)
-            socket.to('agent room').emit('agent update', data)
+            io.in('admin room').emit('agent update', data)
+            io.in('agent room').emit('agent update', data)
             updateUser(data)
         }
     })
@@ -111,7 +110,8 @@ io.on('connection', (socket) => {
                 id: userId,
                 status: 'offline'
             }
-            socket.to('agent room').emit('agent update', data)
+            io.in('agent room').emit('agent update', data)
+            io.in('admin room').emit('agent update', data)
 
             updateUser(data)
         }
